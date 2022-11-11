@@ -248,7 +248,8 @@ def page_not_found(e):
 
 if __name__ == '__main__':
     utapis_crf_tagger, utapis_chart_parser = initialize_crf_cfg()
-    app.run(debug=True, host="localhost", port=5000)
+    # app.run(debug=True, host="localhost", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
 
 # cURL Testing Code:
 # curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://localhost:5000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar"
