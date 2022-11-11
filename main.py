@@ -1,16 +1,24 @@
-# This is a sample Python script.
+from flask import Flask, request
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+app = Flask(__name__)
 
+# Handler untuk pengecekan sintaksis kalimat.
+@app.route('/utapis-cek-sintaksis-kal', methods=['POST'])
+def utapis_cek_sintaksis_kal_handler():
+    article = request.form.get('article', '')
+    if len(article.strip()) <= 0:
+        return {"error": "Empty article input"}, 400
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+    return {"article": article}, 200
 
+# Handler bila url yang digunakan salah.
+@app.errorhandler(404)
+def page_not_found(e):
+    return {"error": "Page not found"}, 404
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    app.run(debug=True, host="localhost", port=5000)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+# cURL Testing Code:
+# curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://localhost:5000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar"
+
