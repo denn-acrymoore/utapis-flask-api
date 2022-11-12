@@ -4,10 +4,12 @@ import nltk
 from nltk.tag import CRFTagger
 import os
 from nltk import ChartParser
+from anyascii import anyascii
 nltk.download('punkt')
 nltk.download('tagsets')
 
 app = Flask(__name__)
+
 
 def preprocess_news_content(news_str):
     """Membagi paragraf - paragraf berita dengan separator '\n\n' lalu
@@ -19,6 +21,9 @@ def preprocess_news_content(news_str):
     tokenized_sentences_list = []
 
     for paragraph in paragraphs_list:
+        # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
+        paragraph = anyascii(paragraph)
+
         # Ubah karakter menjadi lowercase.
         paragraph = paragraph.lower()
 
@@ -28,10 +33,6 @@ def preprocess_news_content(news_str):
 
         # Buang leading & trailing whitespace
         paragraph = paragraph.strip()
-
-        # Ubah simbol left double quote (“) dan right double quote (”) menjadi
-        # quotation mark biasa (").
-        paragraph = re.sub(r'[“”]', r'"', paragraph)
 
         # Ubah double single quote ('') menjadi double quote (").
         paragraph = re.sub(r"''", r'"', paragraph)
