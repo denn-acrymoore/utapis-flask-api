@@ -1,0 +1,11 @@
+MANIFEST.in
+README.txt
+pyproject.toml
+setup.py
+utapis-sintaksis-flask-server/utapis_crf_model.crf.tagger
+utapis-sintaksis-flask-server/utapis_sintaksis_kalimat_v2.cfg
+utapis-sintaksis-flask-server/U_Tapis_Sintaksis_Flask_Server.egg-info/PKG-INFO
+utapis-sintaksis-flask-server/U_Tapis_Sintaksis_Flask_Server.egg-info/SOURCES.txt
+utapis-sintaksis-flask-server/U_Tapis_Sintaksis_Flask_Server.egg-info/dependency_links.txt
+utapis-sintaksis-flask-server/U_Tapis_Sintaksis_Flask_Server.egg-info/requires.txt
+utapis-sintaksis-flask-server/U_Tapis_Sintaksis_Flask_Server.egg-info/top_level.txt
