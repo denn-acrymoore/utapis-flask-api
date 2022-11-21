@@ -280,8 +280,11 @@ if __name__ == "__main__":
 
 # Run waitress from Command Line (Production Mode).
 # pip install dist\utapis_flask_server-1.0.0-py3-none-any.whl
-# waitress-serve --host 127.0.0.1 --port 8000 utapis_sintaksis_flask_server.main:app
+# waitress-serve --host=127.0.0.1 --port=8000 utapis_sintaksis_flask_server.main:app
+# waitress-serve --host=localhost --port=8080 utapis_sintaksis_flask_server.main:app
+# waitress-serve --listen=*:8080 utapis_sintaksis_flask_server.main:app
 
 # cURL Testing Code:
 # curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://localhost:8000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
 # curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://127.0.0.1:8000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
+# curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://10.100.1.99:8080/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
