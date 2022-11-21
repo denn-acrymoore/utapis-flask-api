@@ -2,4 +2,3 @@ flask
 anyascii
 nltk
 python-crfsuite
-waitress

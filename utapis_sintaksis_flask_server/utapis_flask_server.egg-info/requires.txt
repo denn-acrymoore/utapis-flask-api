@@ -1,5 +1,0 @@
-Flask
-anyascii
-nltk
-python-crfsuite
-waitress
