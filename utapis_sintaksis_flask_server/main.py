@@ -205,7 +205,7 @@ def initialize_crf_cfg():
     """
     # print("os.getcwd(): " + os.getcwd())
     # print("__file__: " + __file__)
-    model_path = os.path.join(__file__, os.pardir)
+    model_path = os.path.dirname(os.path.abspath(__file__))
     print("model_path: ", model_path)
     grammar = nltk.data.load(
         "file:" + os.path.join(model_path, "utapis_sintaksis_kalimat_v2.cfg"), "cfg"
