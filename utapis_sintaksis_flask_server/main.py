@@ -5,6 +5,7 @@ from nltk.tag import CRFTagger
 import os
 from nltk import ChartParser
 from anyascii import anyascii
+import json
 
 nltk.download("punkt")
 nltk.download("tagsets")
@@ -220,23 +221,39 @@ def initialize_crf_cfg():
     return utapis_crf_tagger, utapis_chart_parser
 
 
-def get_tagged_sentences(crf_tagger, preprocessed_sentence_list):
-    return crf_tagger.tag_sents(preprocessed_sentence_list)
+# Melakukan tagging ke beberapa kalimat.
+# def get_tagged_sentences(crf_tagger, preprocessed_sentence_list):
+#     return crf_tagger.tag_sents(preprocessed_sentence_list)
+
+
+# Melakukan tagging ke satu kalimat.
+def get_tagged_sentence(crf_tagger, preprocessed_sentence):
+    return crf_tagger.tag(preprocessed_sentence)
+
+
+# Mengembalikan boolean yang menyatakan bahwa sintaksis suatu kalimat benar atau tidak.
+def get_cfg_bool_result(chart_parser, tags):
+    generator = chart_parser.parse(tags)
+    generator_content_count = len(list(generator))
+    if generator_content_count <= 0:
+        return [False]
+    elif generator_content_count > 0:
+        return [True]
 
 
 # Mengembalikan list boolean yang menyatakan bahwa sintaksis suatu kalimat
 # benar atau tidak.
-def get_cfg_bool_results(chart_parser, list_of_tags):
-    cfg_results = []
-    for tags in list_of_tags:
-        generator = chart_parser.parse(tags)
-        generator_content_count = len(list(generator))
+# def get_cfg_bool_results(chart_parser, list_of_tags):
+#     cfg_results = []
+#     for tags in list_of_tags:
+#         generator = chart_parser.parse(tags)
+#         generator_content_count = len(list(generator))
 
-        if generator_content_count <= 0:
-            cfg_results.append(False)
-        elif generator_content_count > 0:
-            cfg_results.append(True)
-    return cfg_results
+#         if generator_content_count <= 0:
+#             cfg_results.append(False)
+#         elif generator_content_count > 0:
+#             cfg_results.append(True)
+#     return cfg_results
 
 
 # Handler untuk pengecekan sintaksis kalimat.
@@ -244,16 +261,30 @@ def get_cfg_bool_results(chart_parser, list_of_tags):
 def utapis_cek_sintaksis_kal_handler():
     article = request.form.get("article", "")
     if len(article.strip()) <= 0:
-        return {"error": "Empty article input"}, 400
+        return (
+            json.dumps({"error": "Empty article input"}),
+            400,
+            {"Content-Type": "application/json"},
+        )
 
     preprocessed_article = preprocess_news_content(article)
-    tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
-    tag_only_sentences = []
-    for tagged_sent in tagged_sentences:
-        tag_only_sentences.append([x[1] for x in tagged_sent])
-    results = get_cfg_bool_results(utapis_chart_parser, tag_only_sentences)
+    # print(f"preprocessed_article: {preprocessed_article}")
 
-    return {"tagged_sentences": tagged_sentences, "results": results}, 200
+    def generate_result(preprocessed_article):
+        for sentence in preprocessed_article:
+            tagged_sentence = get_tagged_sentence(utapis_crf_tagger, sentence)
+            # print(f"tagged_sentence: {tagged_sentence}")
+            tag_only_sentence = [x[1] for x in tagged_sentence]
+            # print(f"tag_only_sentence: {tag_only_sentence}")
+            result = get_cfg_bool_result(utapis_chart_parser, tag_only_sentence)
+
+            yield json.dumps({"tagged_sentences": tagged_sentence, "results": result})
+
+    return (
+        generate_result(preprocessed_article),
+        200,
+        {"Content-Type": "application/json"},
+    )
 
 
 # Handler bila url yang digunakan salah.
