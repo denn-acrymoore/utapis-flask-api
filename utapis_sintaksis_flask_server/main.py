@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import re
 import nltk
 from nltk.tag import CRFTagger
@@ -244,7 +244,7 @@ def get_cfg_bool_results(chart_parser, list_of_tags):
 def utapis_cek_sintaksis_kal_handler():
     article = request.form.get("article", "")
     if len(article.strip()) <= 0:
-        return {"error": "Empty article input"}, 400
+        return jsonify({"error": "Empty article input"}), 400
 
     preprocessed_article = preprocess_news_content(article)
     tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
@@ -253,13 +253,13 @@ def utapis_cek_sintaksis_kal_handler():
         tag_only_sentences.append([x[1] for x in tagged_sent])
     results = get_cfg_bool_results(utapis_chart_parser, tag_only_sentences)
 
-    return {"tagged_sentences": tagged_sentences, "results": results}, 200
+    return jsonify({"tagged_sentences": tagged_sentences, "results": results}), 200
 
 
 # Handler bila url yang digunakan salah.
 @app.errorhandler(404)
 def page_not_found(e):
-    return {"error": "Page not found"}, 404
+    return jsonify({"error": "Page not found"}), 404
 
 
 # Initialize CRF & CFG to global.
