@@ -229,6 +229,8 @@ def get_tagged_sentences(crf_tagger, preprocessed_sentence_list):
 # Mengembalikan list boolean yang menyatakan bahwa sintaksis suatu kalimat
 # benar atau tidak.
 def get_cfg_bool_results(chart_parser, list_of_tags):
+    num_of_sentences = len(list_of_tags)
+    print(f"Found {num_of_sentences} sentences!")
     cfg_results = []
     for idx, tags in enumerate(list_of_tags):
         generator = chart_parser.parse(tags)
@@ -236,10 +238,10 @@ def get_cfg_bool_results(chart_parser, list_of_tags):
 
         if generator_content_count <= 0:
             cfg_results.append(False)
-            print(f"Sentence {idx + 1} = {tags}: {False}!")
+            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags}: {False}!")
         elif generator_content_count > 0:
             cfg_results.append(True)
-            print(f"Sentence {idx + 1} = {tags}: {True}!")
+            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags}: {True}!")
 
     return cfg_results
 
@@ -262,7 +264,6 @@ def utapis_cek_sintaksis_kal_handler():
 
     preprocessed_article = preprocess_news_content(article)
     tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
-    print(f"Tagged Sentences: {tagged_sentences}")
 
     tag_only_sentences = []
     for tagged_sent in tagged_sentences:
