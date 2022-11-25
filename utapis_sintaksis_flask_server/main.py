@@ -249,8 +249,7 @@ def get_cfg_bool_results(chart_parser, list_of_tags):
 # Handler untuk pengecekan sintaksis kalimat.
 @app.route("/utapis-cek-sintaksis-kal", methods=["POST"])
 def utapis_cek_sintaksis_kal_handler():
-    jktTimezone = pytz.timezone("Asia/Jakarta")
-    now = jktTimezone.localize(datetime.now())
+    now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
 
     print(
         f"New request received from {request.remote_addr} at {now.strftime('%Y-%b-%d %H:%M:%S')}"
@@ -270,7 +269,7 @@ def utapis_cek_sintaksis_kal_handler():
         tag_only_sentences.append([x[1] for x in tagged_sent])
     results = get_cfg_bool_results(utapis_chart_parser, tag_only_sentences)
 
-    now = jktTimezone.localize(datetime.now())
+    now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
     print(
         f"Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 200)!"
     )
