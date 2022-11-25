@@ -5,6 +5,8 @@ from nltk.tag import CRFTagger
 import os
 from nltk import ChartParser
 from anyascii import anyascii
+from datetime import datetime
+import pytz
 
 nltk.download("punkt")
 nltk.download("tagsets")
@@ -228,31 +230,50 @@ def get_tagged_sentences(crf_tagger, preprocessed_sentence_list):
 # benar atau tidak.
 def get_cfg_bool_results(chart_parser, list_of_tags):
     cfg_results = []
-    for tags in list_of_tags:
+    for idx, tags in enumerate(list_of_tags):
         generator = chart_parser.parse(tags)
         generator_content_count = len(list(generator))
 
         if generator_content_count <= 0:
             cfg_results.append(False)
+            print(f"Sentence {idx + 1} = {tags}: {False}!")
         elif generator_content_count > 0:
             cfg_results.append(True)
+            print(f"Sentence {idx + 1} = {tags}: {True}!")
+
     return cfg_results
 
 
 # Handler untuk pengecekan sintaksis kalimat.
 @app.route("/utapis-cek-sintaksis-kal", methods=["POST"])
 def utapis_cek_sintaksis_kal_handler():
+    jktTimezone = pytz.timezone("Asia/Jakarta")
+    now = jktTimezone.localize(datetime.now())
+
+    print(
+        f"New request received from {request.remote_addr} at {now.strftime('%Y-%b-%d %H:%M:%S')}"
+    )
     article = request.form.get("article", "")
     if len(article.strip()) <= 0:
+        print(
+            f"Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 400)!"
+        )
         return jsonify({"error": "Empty article input"}), 400
 
     preprocessed_article = preprocess_news_content(article)
     tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
+    print(f"Tagged Sentences: {tagged_sentences}")
+
     tag_only_sentences = []
     for tagged_sent in tagged_sentences:
         tag_only_sentences.append([x[1] for x in tagged_sent])
     results = get_cfg_bool_results(utapis_chart_parser, tag_only_sentences)
 
+    now = jktTimezone.localize(datetime.now())
+    print(
+        f"Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 200)!"
+    )
+    print()
     return jsonify({"tagged_sentences": tagged_sentences, "results": results}), 200
 
 
