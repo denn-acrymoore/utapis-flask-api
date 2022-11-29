@@ -1,7 +1,8 @@
 """NOTE: File ini digunakan untuk uji API saat mengirimkan artikel."""
 import requests
 
-url = "http://10.100.1.99:8080/utapis-cek-sintaksis-kal"
+# url = "http://10.100.1.99:8080/utapis-cek-sintaksis-kal"
+url = "http://localhost:8000/utapis-cek-sintaksis-kal"
 
 # article = """TRIBUNNEWS.COM, JAKARTA --Penggunaan laser dalam dunia kedokteran khususnya kesehatan kulit bukanlah hal  baru.
 

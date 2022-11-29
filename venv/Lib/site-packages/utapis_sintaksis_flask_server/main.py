@@ -3,7 +3,8 @@ import re
 import nltk
 from nltk.tag import CRFTagger
 import os
-from nltk import ChartParser
+from nltk.parse.chart import SteppingChartParser, FilteredSingleEdgeFundamentalRule
+from nltk.parse.chart import LeafInitRule, FilteredBottomUpPredictCombineRule
 from anyascii import anyascii
 from datetime import datetime
 import pytz
@@ -212,28 +213,56 @@ def initialize_crf_cfg():
     grammar = nltk.data.load(
         "file:" + os.path.join(model_path, "utapis_sintaksis_kalimat_v2.cfg"), "cfg"
     )
-    utapis_chart_parser = ChartParser(grammar)
+
+    LEFT_CORNER_STRATEGY = [
+        LeafInitRule(),
+        FilteredBottomUpPredictCombineRule(),
+        FilteredSingleEdgeFundamentalRule(),
+    ]
+
+    utapis_scp = SteppingChartParser(
+        grammar=grammar, strategy=LEFT_CORNER_STRATEGY, trace=0
+    )
 
     utapis_crf_tagger = CRFTagger()
     utapis_crf_tagger.set_model_file(
         os.path.join(model_path, "utapis_crf_model.crf.tagger")
     )
 
-    return utapis_crf_tagger, utapis_chart_parser
+    return utapis_crf_tagger, utapis_scp
 
 
 def get_tagged_sentences(crf_tagger, preprocessed_sentence_list):
     return crf_tagger.tag_sents(preprocessed_sentence_list)
 
 
+# Melakukan parsing dengan SteppingChartParser Left-Corner Strategy dengan
+# Early Stopping (berhenti bila ditemukan hasil).
+def stepping_chart_parsing(scp, tags):
+    scp.initialize(tags)
+
+    for step in scp.step():
+        # Berhenti bila ditemukan parsing yang lengkap.
+        if len(list(scp.parses())) > 0:
+            break
+
+        # Berhenti bila sudah tidak ada lagi kemungkinan parsing
+        # yang bisa ditambahkan.
+        if step is None:
+            break
+
+    # Return generator.
+    return scp.parses()
+
+
 # Mengembalikan list boolean yang menyatakan bahwa sintaksis suatu kalimat
-# benar atau tidak.
-def get_cfg_bool_results(chart_parser, list_of_tags):
+# benar atau tidak (menggunakan SteppingChartParser).
+def get_cfg_bool_results(scp, list_of_tags):
     num_of_sentences = len(list_of_tags)
     print(f"Found {num_of_sentences} sentences!")
     cfg_results = []
     for idx, tags in enumerate(list_of_tags):
-        generator = chart_parser.parse(tags)
+        generator = stepping_chart_parsing(scp, tags)
         generator_content_count = len(list(generator))
 
         if generator_content_count <= 0:
@@ -250,10 +279,20 @@ def get_cfg_bool_results(chart_parser, list_of_tags):
 @app.route("/utapis-cek-sintaksis-kal", methods=["POST"])
 def utapis_cek_sintaksis_kal_handler():
     now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
-
     print(
         f"New request received from {request.remote_addr} at {now.strftime('%Y-%b-%d %H:%M:%S')}"
     )
+
+    false_only = request.args.get("false-only", False)
+    false_only = True if false_only == "1" else False
+    bool_only = request.args.get("bool-only", False)
+    bool_only = True if bool_only == "1" else False
+
+    if false_only:
+        print("Additional Request Option: False Only")
+    elif bool_only:
+        print("Additional Request Option: Bool Only")
+
     article = request.form.get("article", "")
     if len(article.strip()) <= 0:
         print(
@@ -267,13 +306,26 @@ def utapis_cek_sintaksis_kal_handler():
     tag_only_sentences = []
     for tagged_sent in tagged_sentences:
         tag_only_sentences.append([x[1] for x in tagged_sent])
-    results = get_cfg_bool_results(utapis_chart_parser, tag_only_sentences)
+    results = get_cfg_bool_results(utapis_scp, tag_only_sentences)
 
     now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
     print(
         f"Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 200)!"
     )
     print()
+
+    # Hanya return kalimat-kalimat yang gagal diparsing.
+    if false_only == True:
+        filtered_tagged_sentences = []
+        for result, tagged_sentence in zip(results, tagged_sentences):
+            if result == False:
+                filtered_tagged_sentences.append(tagged_sentence)
+        return jsonify({"tagged_sentences": filtered_tagged_sentences}), 200
+
+    # Hanya return hasil parsing (tanpa hasil labeling/tagging).
+    if bool_only == True:
+        return jsonify({"results": results}), 200
+
     return jsonify({"tagged_sentences": tagged_sentences, "results": results}), 200
 
 
@@ -284,7 +336,7 @@ def page_not_found(e):
 
 
 # Initialize CRF & CFG to global.
-utapis_crf_tagger, utapis_chart_parser = initialize_crf_cfg()
+utapis_crf_tagger, utapis_scp = initialize_crf_cfg()
 
 if __name__ == "__main__":
     app.run(debug=True, host="localhost", port=8000)
