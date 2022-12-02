@@ -3,3 +3,4 @@ anyascii
 nltk
 python-crfsuite
 pytz
+beautifulsoup4

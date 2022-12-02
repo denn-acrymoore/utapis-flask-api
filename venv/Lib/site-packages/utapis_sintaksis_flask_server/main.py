@@ -8,6 +8,7 @@ from nltk.parse.chart import LeafInitRule, FilteredBottomUpPredictCombineRule
 from anyascii import anyascii
 from datetime import datetime
 import pytz
+from bs4 import BeautifulSoup
 
 nltk.download("punkt")
 nltk.download("tagsets")
@@ -20,17 +21,21 @@ def preprocess_news_content(news_str):
     membagi string berita tersebut lagi per kalimat dan melakukan text
     preprocessing.
     """
+    # Ekstraksi konten dari HTML Rich Text dengan BeautifulSoup4
+    soup = BeautifulSoup(news_str, "html.parser")
+    news_html_free = soup.get_text()
+
+    # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
+    news_html_free = anyascii(news_html_free)
+
+    # Ubah karakter menjadi lowercase.
+    news_html_free = news_html_free.lower()
+
     # Bagi string berdasarkan separator dua newline ('\n\n').
-    paragraphs_list = news_str.split("\n\n")
+    paragraphs_list = news_html_free.split("\n\n")
     tokenized_sentences_list = []
 
     for paragraph in paragraphs_list:
-        # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
-        paragraph = anyascii(paragraph)
-
-        # Ubah karakter menjadi lowercase.
-        paragraph = paragraph.lower()
-
         # Ubah karakter - karakter whitespace ('\t', '\n', '\r', ' ')
         # menjadi satu space (' ').
         paragraph = re.sub(r"\s+", r" ", paragraph)
