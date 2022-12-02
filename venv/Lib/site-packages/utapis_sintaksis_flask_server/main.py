@@ -260,17 +260,22 @@ def stepping_chart_parsing(scp, tags):
 def get_cfg_bool_results(scp, list_of_tags):
     num_of_sentences = len(list_of_tags)
     print(f"Found {num_of_sentences} sentences!")
+
+    tag_only_sentences = []
+    for tagged_sent in list_of_tags:
+        tag_only_sentences.append([x[1] for x in tagged_sent])
+
     cfg_results = []
-    for idx, tags in enumerate(list_of_tags):
+    for idx, (tags, tags_and_words) in enumerate(zip(tag_only_sentences, list_of_tags)):
         generator = stepping_chart_parsing(scp, tags)
         generator_content_count = len(list(generator))
 
         if generator_content_count <= 0:
             cfg_results.append(False)
-            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags}: {False}!")
+            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags_and_words}: {False}!")
         elif generator_content_count > 0:
             cfg_results.append(True)
-            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags}: {True}!")
+            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags_and_words}: {True}!")
 
     return cfg_results
 
@@ -303,10 +308,7 @@ def utapis_cek_sintaksis_kal_handler():
     preprocessed_article = preprocess_news_content(article)
     tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
 
-    tag_only_sentences = []
-    for tagged_sent in tagged_sentences:
-        tag_only_sentences.append([x[1] for x in tagged_sent])
-    results = get_cfg_bool_results(utapis_scp, tag_only_sentences)
+    results = get_cfg_bool_results(utapis_scp, tagged_sentences)
 
     now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
     print(
