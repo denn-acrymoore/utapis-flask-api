@@ -29,31 +29,31 @@ def preprocess_news_content(news_str):
     news_str = re.sub(r"(\\n|\\r)", r"\n", news_str)
     news_str = re.sub(r"(\\t|\\f|\\v)", r" ", news_str)
 
-    print("Article RAW Unescaped WhiteSpace:")
-    print(repr(news_str))
+    # print("Article RAW Unescaped WhiteSpace:")
+    # print(repr(news_str))
 
     # Ekstraksi konten dari HTML Rich Text dengan BeautifulSoup4
     soup = BeautifulSoup(news_str, "html.parser")
     news_html_free = soup.get_text()
-    print("BeautifulSoup:")
-    print(repr(news_html_free))
+    # print("BeautifulSoup:")
+    # print(repr(news_html_free))
 
     # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
     news_html_free = anyascii(news_html_free)
-    print("anyascii:")
-    print(repr(news_html_free))
+    # print("anyascii:")
+    # print(repr(news_html_free))
 
     # Ubah karakter menjadi lowercase.
     news_html_free = news_html_free.lower()
-    print("lower():")
-    print(repr(news_html_free))
+    # print("lower():")
+    # print(repr(news_html_free))
 
     # Bagi string berdasarkan separator newline ('\n').
     # NOTE: Menggunakan separator \n, bukan \n\n karena
     #       beautiful soup akan mengubah \n+ menjadi \n.
     paragraphs_list = news_html_free.split("\n")
-    print("split():")
-    print(repr(paragraphs_list))
+    # print("split():")
+    # print(repr(paragraphs_list))
     tokenized_sentences_list = []
 
     for paragraph in paragraphs_list:
@@ -325,8 +325,8 @@ def utapis_cek_sintaksis_kal_handler():
         print("Additional Request Option: Bool Only")
 
     article = request.form.get("article", "")
-    print("Article RAW:")
-    print(repr(article))
+    # print("Article RAW:")
+    # print(repr(article))
 
     if len(article.strip()) <= 0:
         print(
