@@ -1,19 +1,10 @@
-from flask import Flask, request, jsonify
 import re
 import nltk
-from nltk.tag import CRFTagger
-import os
-from nltk.parse.chart import SteppingChartParser, FilteredSingleEdgeFundamentalRule
-from nltk.parse.chart import LeafInitRule, FilteredBottomUpPredictCombineRule
 from anyascii import anyascii
-from datetime import datetime
-import pytz
 from bs4 import BeautifulSoup
 
 nltk.download("punkt")
 nltk.download("tagsets")
-
-app = Flask(__name__)
 
 
 def preprocess_news_content(news_str):
@@ -225,171 +216,8 @@ def preprocess_news_content(news_str):
     return tokenized_sentences_list
 
 
-# Siapkan CRF dan CFG
-def initialize_crf_cfg():
-    """NOTE:
-    - os.getcwd()   --> Print working directory (not suitable for modules).
-    - __file__      --> Print absolute path for this file "main.py" (suitable
-                        for modules).
-    """
-    # print("os.getcwd(): " + os.getcwd())
-    # print("__file__: " + __file__)
-    model_path = os.path.dirname(os.path.abspath(__file__))
-    print("model_path: ", model_path)
-    grammar = nltk.data.load(
-        "file:" + os.path.join(model_path, "utapis_sintaksis_kalimat_v2.cfg"), "cfg"
-    )
-
-    LEFT_CORNER_STRATEGY = [
-        LeafInitRule(),
-        FilteredBottomUpPredictCombineRule(),
-        FilteredSingleEdgeFundamentalRule(),
-    ]
-
-    utapis_scp = SteppingChartParser(
-        grammar=grammar, strategy=LEFT_CORNER_STRATEGY, trace=0
-    )
-
-    utapis_crf_tagger = CRFTagger()
-    utapis_crf_tagger.set_model_file(
-        os.path.join(model_path, "utapis_crf_model.crf.tagger")
-    )
-
-    return utapis_crf_tagger, utapis_scp
-
-
-def get_tagged_sentences(crf_tagger, preprocessed_sentence_list):
-    return crf_tagger.tag_sents(preprocessed_sentence_list)
-
-
-# Melakukan parsing dengan SteppingChartParser Left-Corner Strategy dengan
-# Early Stopping (berhenti bila ditemukan hasil).
-def stepping_chart_parsing(scp, tags):
-    scp.initialize(tags)
-
-    for step in scp.step():
-        # Berhenti bila ditemukan parsing yang lengkap.
-        if len(list(scp.parses())) > 0:
-            break
-
-        # Berhenti bila sudah tidak ada lagi kemungkinan parsing
-        # yang bisa ditambahkan.
-        if step is None:
-            break
-
-    # Return generator.
-    return scp.parses()
-
-
-# Mengembalikan list boolean yang menyatakan bahwa sintaksis suatu kalimat
-# benar atau tidak (menggunakan SteppingChartParser).
-def get_cfg_bool_results(scp, list_of_tags):
-    num_of_sentences = len(list_of_tags)
-    print(f"Found {num_of_sentences} sentences!")
-
-    tag_only_sentences = []
-    for tagged_sent in list_of_tags:
-        tag_only_sentences.append([x[1] for x in tagged_sent])
-
-    cfg_results = []
-    for idx, (tags, tags_and_words) in enumerate(zip(tag_only_sentences, list_of_tags)):
-        generator = stepping_chart_parsing(scp, tags)
-        generator_content_count = len(list(generator))
-
-        if generator_content_count <= 0:
-            cfg_results.append(False)
-            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags_and_words}: {False}!")
-        elif generator_content_count > 0:
-            cfg_results.append(True)
-            print(f"Sentence {idx + 1}/{num_of_sentences} = {tags_and_words}: {True}!")
-
-    return cfg_results
-
-
-# Handler untuk pengecekan sintaksis kalimat.
-@app.route("/utapis-cek-sintaksis-kal", methods=["POST"])
-def utapis_cek_sintaksis_kal_handler():
-    now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
-    print(
-        f"New request received from {request.remote_addr} at {now.strftime('%Y-%b-%d %H:%M:%S')}"
-    )
-
-    false_only = request.args.get("false-only", False)
-    false_only = True if false_only == "1" else False
-    bool_only = request.args.get("bool-only", False)
-    bool_only = True if bool_only == "1" else False
-
-    if false_only:
-        print("Additional Request Option: False Only")
-    elif bool_only:
-        print("Additional Request Option: Bool Only")
-
-    article = request.form.get("article", "")
-    print("Article RAW:")
-    print(repr(article))
-
-    if len(article.strip()) <= 0:
-        print(
-            f"Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 400)!"
-        )
-        return jsonify({"error": "Empty article input"}), 400
-
-    preprocessed_article = preprocess_news_content(article)
-    tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
-
-    results = get_cfg_bool_results(utapis_scp, tagged_sentences)
-
-    now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
-    print(
-        f"Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 200)!"
-    )
-    print()
-
-    # Hanya return kalimat-kalimat yang gagal diparsing.
-    if false_only == True:
-        filtered_tagged_sentences = []
-        for result, tagged_sentence in zip(results, tagged_sentences):
-            if result == False:
-                filtered_tagged_sentences.append(tagged_sentence)
-        return jsonify({"tagged_sentences": filtered_tagged_sentences}), 200
-
-    # Hanya return hasil parsing (tanpa hasil labeling/tagging).
-    if bool_only == True:
-        return jsonify({"results": results}), 200
-
-    return jsonify({"tagged_sentences": tagged_sentences, "results": results}), 200
-
-
-# Handler bila url yang digunakan salah.
-@app.errorhandler(404)
-def page_not_found(e):
-    return jsonify({"error": "Page not found"}), 404
-
-
-# Initialize CRF & CFG to global.
-utapis_crf_tagger, utapis_scp = initialize_crf_cfg()
-
-if __name__ == "__main__":
-    app.run(debug=True, host="localhost", port=8000)
-    # app.run(debug=False, host="0.0.0.0", port=5000)
-
-# Run Flask from Command Line (Development Mode).
-# NOTE: (if __name__ = "__main__") will not be run.
-# flask --app utapis_flask_server\main.py run --host localhost --port 8000
-
-# NOTE:
-# - Use python -m build to create the module's distribution ('tar.gz' and '.whl' file in
-# 'dist' directory).
-# - Then, install the wheel file using pip install.
-
-# Run waitress from Command Line (Production Mode).
-# pip install dist\utapis_flask_server-1.0.0-py3-none-any.whl
-# waitress-serve --host=127.0.0.1 --port=8000 utapis_sintaksis_flask_server.main:app
-# waitress-serve --host=localhost --port=8080 utapis_sintaksis_flask_server.main:app
-# waitress-serve --listen=*:8080 utapis_sintaksis_flask_server.main:app
-# waitress-serve --host=10.100.1.99 --port=8080 utapis_sintaksis_flask_server.main:app
-
-# cURL Testing Code:
-# curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://localhost:8000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
-# curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://127.0.0.1:8000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
-# curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://10.100.1.99:8080/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
+raw_dari_website_utapis = """<p><strong>TRIBUNNEWS.COM</strong>&nbsp;-&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/lembaga-perlindungan-saksi-dan-korban">Lembaga Perlindungan Saksi dan Korban</a>&nbsp;(LPSK) mengajukan rekomendasi permohonan keringanan hukuman terhadap&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/bharada-richard-eliezer">Bharada Richard Eliezer</a>&nbsp;atau Bharada E dalam kasus pembunuhan Brigadir Nofriansyah Yosua Hutabarat atau&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/brigadir-j">Brigadir J</a>.</p>\r\n<p>Pasalnya, Bharada Eliezer bersedia menjadi Justice Collaborator (JC) dalam membuka kasus ini.</p>\r\n<p>Apalagi kasus ini menyangkut kebohongan seorang perwira polri yang seharusnya menjadi penegak hukum.</p>"""
+print("Article RAW:")
+print(repr(raw_dari_website_utapis))
+result = preprocess_news_content(raw_dari_website_utapis)
+print(repr(result))

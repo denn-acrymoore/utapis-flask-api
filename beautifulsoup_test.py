@@ -50,3 +50,10 @@ plain_text = "Hello&nbsp;World!"
 plain_text_parser = BeautifulSoup(plain_text, "html.parser")
 print(repr(plain_text_parser.get_text()))
 print(repr(anyascii(plain_text_parser.get_text())))
+
+raw_dari_website_utapis = """<p><strong>TRIBUNNEWS.COM</strong>&nbsp;-&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/lembaga-perlindungan-saksi-dan-korban">Lembaga Perlindungan Saksi dan Korban</a>&nbsp;(LPSK) mengajukan rekomendasi permohonan keringanan hukuman terhadap&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/bharada-richard-eliezer">Bharada Richard Eliezer</a>&nbsp;atau Bharada E dalam kasus pembunuhan Brigadir Nofriansyah Yosua Hutabarat atau&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/brigadir-j">Brigadir J</a>.</p>\r\n<p>Pasalnya, Bharada Eliezer bersedia menjadi Justice Collaborator (JC) dalam membuka kasus ini.</p>\r\n<p>Apalagi kasus ini menyangkut kebohongan seorang perwira polri yang seharusnya menjadi penegak hukum.</p>"""
+parser = BeautifulSoup(raw_dari_website_utapis, "html.parser")
+result = parser.get_text()
+print(repr(result))
+print(repr(anyascii(result)))
+print(anyascii(result))
