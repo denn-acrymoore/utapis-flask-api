@@ -16,6 +16,7 @@ nltk.download("tagsets")
 app = Flask(__name__)
 
 
+# Fungsi untuk preprocessing agar bisa diolah oleh algoritma CRF dan CFG.
 def preprocess_news_content(news_str):
     """Membagi paragraf - paragraf berita dengan separator '\n' lalu
     membagi string berita tersebut lagi per kalimat dan melakukan text
@@ -81,29 +82,6 @@ def preprocess_news_content(news_str):
         # 2023.2112,232,1313 . 20323.3234,234,1313, 20323.3234,234,1313 .
         # ['2022.', '2023.', '33.', '3122.']
         paragraph = re.sub(r"\b(?P<myNum>[0-9]+)\.\B", r"\g<myNum> .", paragraph)
-
-        # Skip paragraph bila paragraph berisi pesan otomatis dari Google
-        # NOTE: Hapus kodeini saat fungsi ini digunakan untuk preprocessing
-        # pada aplikasi final.
-        # google_pattern = r'you received this message because you are subscribed to the'
-        # if re.search(google_pattern, paragraph):
-        #     continue
-
-        # Skip paragraf bila paragraf berisi link website (untuk mempermudah
-        # training).
-        # NOTE: Hapus kode ini saat fungsi ini digunakan untuk preprocessing
-        # pada aplikasi final.
-        # http_pattern = r'http'
-        # if re.search(http_pattern, paragraph):
-        #     continue
-
-        # Skip paragraf bila konten mengandung karakter UTF-8 (untuk mempermudah
-        # training)
-        # NOTE: Hapus kode ini saat fungsi ini digunakan untuk preprocessing
-        # pada aplikasi final.
-        # utf_8_pattern = r'='
-        # if re.search(utf_8_pattern, paragraph):
-        #     continue
 
         # Melakukan tokenization.
         tokenized_paragraph = nltk.tokenize.word_tokenize(paragraph)
@@ -225,6 +203,208 @@ def preprocess_news_content(news_str):
     return tokenized_sentences_list
 
 
+# Fungsi preprocessing yang hanya memisahkan data artikel menjadi per kalimat.
+def preprocess_separate_sentences(news_str):
+    """Membagi paragraf - paragraf berita dengan separator '\n' lalu
+    membagi string berita tersebut lagi per kalimat (tanpa preprocessing untuk
+    CRF dan CFG).
+    """
+    # Unescape backslashes.
+    # - Ubah \\n dan \\r menjadi \n.
+    # - Ubah \\t \\f dan \\v menjadi " " (space).
+    # Link: https://docs.python.org/3/howto/regex.html#the-backslash-plague
+    # Link: https://www.toppr.com/guides/python-guide/references/methods-and-functions/methods/string/isspace/python-string-isspace/
+    news_str = re.sub(r"(\\n|\\r)", r"\n", news_str)
+    news_str = re.sub(r"(\\t|\\f|\\v)", r" ", news_str)
+
+    # Ekstraksi konten dari HTML Rich Text dengan BeautifulSoup4
+    soup = BeautifulSoup(news_str, "html.parser")
+    news_html_free = soup.get_text()
+
+    # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
+    news_html_free = anyascii(news_html_free)
+
+    # Bagi string berdasarkan separator newline ('\n').
+    # NOTE: Menggunakan separator \n, bukan \n\n karena
+    #       beautiful soup akan mengubah \n+ menjadi \n.
+    paragraphs_list = news_html_free.split("\n")
+    tokenized_sentences_list = []
+
+    for paragraph in paragraphs_list:
+        # Ubah karakter - karakter whitespace ('\t', '\n', '\r', ' ')
+        # menjadi satu space (' ').
+        paragraph = re.sub(r"\s+", r" ", paragraph)
+
+        # Buang leading & trailing whitespace
+        paragraph = paragraph.strip()
+
+        # Ubah double single quote ('') menjadi double quote (").
+        paragraph = re.sub(r"''", r'"', paragraph)
+
+        # Pisahkan tanda titik terakhir dari bilangan agar tanda titik dapat
+        # dipisahkan oleh nltk.tokenize.word_tokenize().
+        # CONTOH KODE:
+        # print(re.sub(r'\b(?P<myNum>[0-9]+)\.\B', r'\g<myNum> .',
+        #       '2023.2112,232,1313. 20323.3234,234,1313, 20323.3234,234,1313.')
+        # )
+        # print(re.findall(r'\b[0-9]+\.\B',
+        #       'pada tahun 2022. pada tahun 2023. 11.22.33. 2024 2025.2026.3122.')
+        # )
+        #
+        # OUTPUT:
+        # 2023.2112,232,1313 . 20323.3234,234,1313, 20323.3234,234,1313 .
+        # ['2022.', '2023.', '33.', '3122.']
+        paragraph = re.sub(r"\b(?P<myNum>[0-9]+)\.\B", r"\g<myNum> .", paragraph)
+
+        # Melakukan tokenization.
+        tokenized_paragraph = nltk.tokenize.word_tokenize(paragraph)
+
+        # Loop untuk mengelompokkan token-token tersebut per kalimat.
+        is_in_quotation = False
+        is_terminal_found_inside_quotation = False
+        num_of_quote_inside_quote = 0
+        temp_tokenized_sentence = []
+        for token in tokenized_paragraph:
+            """NOTE:
+            Dua backtick (``)       = Kutip dua awal (start quotation).
+            Dua kutip tunggal ('')  = Kutip dua akhir (end quotation).
+            """
+
+            # Masukkan semua token ke dalam temp_tokenized_sentence
+            temp_tokenized_sentence.append(token)
+
+            # Bila ditemukan tanda kutip dua awal dan sekarang ini belum berada
+            # di dalam kutipan, ubah status menjadi di dalam kutipan (tanda
+            # kutip awal ini disimpan).
+            if token == "``" and not is_in_quotation:
+                is_in_quotation = True
+
+            # Bila ditemukan tanda kutip dua awal dan sekarang ini sedang
+            # berada di dalam kutipan, tambahkan nilai
+            # "num_of_quote_inside_quote" (tanda kutip awal ini tidak disimpan).
+            elif token == "``" and is_in_quotation:
+                num_of_quote_inside_quote += 1
+
+            # Bila ditemukan tanda kutip dua akhir dan tidak ditemukan tanda
+            # kutip dua awal lain yang belum berpasangan, simpan simbol terakhir
+            # yang ditemukan di dalam kutipan dan simpan tanda kutip akhir
+            # tersebut.
+            if token == "''" and num_of_quote_inside_quote == 0:
+                is_in_quotation = False
+
+            # Bila ditemukan tanda kutip dua akhir dan ditemukan tanda kutip
+            # dua awal lainnya yang belum berpasangan, kurangi nilai
+            # "num_of_quote_inside_quote" (tanda kutip akhir ini tidak
+            # disimpan).
+            elif token == "''" and num_of_quote_inside_quote > 0:
+                num_of_quote_inside_quote -= 1
+
+            # Bila ditemukan tanda terminal (.!?) kalimat dan sekarang ini tidak
+            # sedang berada di dalam kuotasi, kelompokkan token-token ini
+            # menjadi satu kalimat.
+            if not is_in_quotation and re.search(r"^[.?!]$", token):
+                tokenized_sentences_list.append(temp_tokenized_sentence)
+                temp_tokenized_sentence = []
+
+            # Bila ditemukan tanda terminal (.!?) kalimat dan sekarang ini
+            # di dalam kuotasi, pisahkan kalimat bila karakter setelahnya
+            # adalah tanda kutip dua akhir.
+
+            # Bila ditemukan tanda terminal di dalam kuotasi dan tidak ada
+            # tanda kutip lainnya di dalam kuotasi yang belum berpasangan.
+            if (
+                is_in_quotation
+                and re.search(r"^[.?!]$", token)
+                and num_of_quote_inside_quote == 0
+            ):
+                is_terminal_found_inside_quotation = True
+            else:
+                # Bila tanda sekarang ini adalah tanda kutip akhir dan ditemukan
+                # tanda terminal di dalam kuotasi, kelompokkan token-token ini
+                # menjadi satu kalimat.
+                if (
+                    token == "''"
+                    and is_terminal_found_inside_quotation == True
+                    and num_of_quote_inside_quote == 0
+                ):
+                    tokenized_sentences_list.append(temp_tokenized_sentence)
+                    temp_tokenized_sentence = []
+                    is_terminal_found_inside_quotation = False
+                # Selain semua hal di atas, ubah
+                # is_terminal_found_inside_quotation menjadi false karena
+                # tanda terminal itu (bila ada) tidak lagi bersebelahan dengan
+                # tanda kutip akhir.
+                else:
+                    is_terminal_found_inside_quotation = False
+
+        # Simpan sisa token di dalam temp list sebagai "kalimat tanpa
+        # tanda terminal."
+        if len(temp_tokenized_sentence) != 0:
+            tokenized_sentences_list.append(temp_tokenized_sentence)
+            temp_tokenized_sentence = []
+
+    untokenized_sentences_list = []
+    for token_sents in tokenized_sentences_list:
+        # Gabungkan token-token menjadi satu string yang dibatasi satu spasi.
+        temp_untokenized_sentence = " ".join(token_sents)
+
+        # Buang spasi di sebelah kiri tanda baca ;,.?!
+        temp_untokenized_sentence = re.sub(
+            r"\s+(?P<punctuation>[;,.?!])",
+            r"\g<punctuation>",
+            temp_untokenized_sentence,
+        )
+
+        # Buang spasi di sebelah kanan tanda ``
+        temp_untokenized_sentence = re.sub(r"``\s+", r"``", temp_untokenized_sentence)
+
+        # Buang spasi di sebelah kiri tanda ''
+        temp_untokenized_sentence = re.sub(r"\s+''", r"''", temp_untokenized_sentence)
+
+        # Buang spasi di sebelah kanan tanda (<[{
+        temp_untokenized_sentence = re.sub(
+            r"(?P<punctuation>[\(\<\[\{])\s+",
+            r"\g<punctuation>",
+            temp_untokenized_sentence,
+        )
+
+        # Buang spasi di sebelah kiri tanda )>]}
+        temp_untokenized_sentence = re.sub(
+            r"\s+(?P<punctuation>[\)\>\]\}])",
+            r"\g<punctuation>",
+            temp_untokenized_sentence,
+        )
+
+        # Buang spasi di sebelah kiri dan kanan tanda -
+        temp_untokenized_sentence = re.sub(r"\s*-\s*", r"-", temp_untokenized_sentence)
+
+        # Buang spasi di sebelah kiri tanda '
+        # NOTE: nltk.tokenize.word_tokenize("hello 'world lmao' hello.")
+        # = ['hello', "'world", 'lmao', "'", 'hello', '.']
+        temp_untokenized_sentence = re.sub(r"\s+'\B", r"'", temp_untokenized_sentence)
+
+        # Buang spasi di antara angka dengan tanda %
+        temp_untokenized_sentence = re.sub(
+            r"(?P<num>\d+)\s+(?P<punctuation>%)",
+            r"\g<num>\g<punctuation>",
+            temp_untokenized_sentence,
+        )
+
+        # Buang spasi di antara kata dengan tanda @#$
+        temp_untokenized_sentence = re.sub(
+            r"(?P<punctuation>[@#$])\s+(?P<word>\w+)",
+            r"\g<punctuation>\g<word>",
+            temp_untokenized_sentence,
+        )
+
+        # Ubah `` dan '' menjadi "
+        temp_untokenized_sentence = re.sub(r"``|''", r'"', temp_untokenized_sentence)
+
+        untokenized_sentences_list.append(temp_untokenized_sentence)
+
+    return untokenized_sentences_list
+
+
 # Siapkan CRF dan CFG
 def initialize_crf_cfg():
     """NOTE:
@@ -335,6 +515,7 @@ def utapis_cek_sintaksis_kal_handler():
         return jsonify({"error": "Empty article input"}), 400
 
     preprocessed_article = preprocess_news_content(article)
+    separated_sentences = preprocess_separate_sentences(article)
     tagged_sentences = get_tagged_sentences(utapis_crf_tagger, preprocessed_article)
 
     results = get_cfg_bool_results(utapis_scp, tagged_sentences)
@@ -347,17 +528,28 @@ def utapis_cek_sintaksis_kal_handler():
 
     # Hanya return kalimat-kalimat yang gagal diparsing.
     if false_only == True:
-        filtered_tagged_sentences = []
-        for result, tagged_sentence in zip(results, tagged_sentences):
+        filtered_sentences = []
+        for result, sentence in zip(results, separated_sentences):
             if result == False:
-                filtered_tagged_sentences.append(tagged_sentence)
-        return jsonify({"tagged_sentences": filtered_tagged_sentences}), 200
+                filtered_sentences.append({"sentence": sentence})
+        return jsonify({"results": filtered_sentences}), 200
 
     # Hanya return hasil parsing (tanpa hasil labeling/tagging).
     if bool_only == True:
-        return jsonify({"results": results}), 200
+        bool_only_data = [{"is_valid": x} for x in results]
+        return jsonify({"results": bool_only_data}), 200
 
-    return jsonify({"tagged_sentences": tagged_sentences, "results": results}), 200
+    return (
+        jsonify(
+            {
+                "results": [
+                    {"sentence": sentence, "is_valid": result}
+                    for result, sentence in zip(results, separated_sentences)
+                ]
+            }
+        ),
+        200,
+    )
 
 
 # Handler bila url yang digunakan salah.
