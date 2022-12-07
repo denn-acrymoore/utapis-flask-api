@@ -580,7 +580,7 @@ if __name__ == "__main__":
 # waitress-serve --host=localhost --port=8080 utapis_sintaksis_flask_server.main:app
 # waitress-serve --listen=*:8080 utapis_sintaksis_flask_server.main:app
 # waitress-serve --host=10.100.1.99 --port=8080 utapis_sintaksis_flask_server.main:app
-# waitress-serve --host=172.25.1.133 --port=80 utapis_sintaksis_flask_server.main:app
+# waitress-serve --host=172.25.1.133 --port=8080 utapis_sintaksis_flask_server.main:app
 
 # cURL Testing Code:
 # curl -X POST -H "Content-Type: application/x-www-form-urlencoded" http://localhost:8000/utapis-cek-sintaksis-kal -d "article=Dia pergi ke pasar."
