@@ -1,4 +1,0 @@
-flask
-anyascii
-nltk
-python-crfsuite
