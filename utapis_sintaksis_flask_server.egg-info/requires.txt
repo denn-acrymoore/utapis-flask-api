@@ -4,3 +4,6 @@ nltk
 python-crfsuite
 pytz
 beautifulsoup4
+sastrawi
+pandas
+openpyxl

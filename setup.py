@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="utapis-sintaksis-flask-server",
-    version="1.0.0",
+    version="1.1.0",
     install_requires=[
         "flask",
         "anyascii",
@@ -10,6 +10,9 @@ setup(
         "python-crfsuite",
         "pytz",
         "beautifulsoup4",
+        "sastrawi",
+        "pandas",
+        "openpyxl",
     ],
     include_package_data=True,
     packages=find_packages(),
