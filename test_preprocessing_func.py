@@ -410,30 +410,31 @@ def preprocess_separate_sentences(news_str):
 # print()
 
 
-test_raw_data = """
-Hello world!!!
-Hello (nope<lmao>)world-lmao[yeet].
-Hello 5% there.!@
-Menang 5:0\\n
-tagar #relatable hello.
-Hello @instagram_hello
-$500 harga murah.
-"Dia PERGI ke taman," ujar sultan syahrir.
-Seminar bertajuk 'harmonia', 'pelangi di ujung taman', dan 'kasih'.
-''Fantasia''.
-"""
+# test_raw_data = """
+# Hello world!!!
+# Hello (nope<lmao>)world-lmao[yeet].
+# Hello 5% there.!@
+# Menang 5:0\\n
+# tagar #relatable hello.
+# Hello @instagram_hello
+# $500 harga murah.
+# "Dia PERGI ke taman," ujar sultan syahrir.
+# Seminar bertajuk 'harmonia', 'pelangi di ujung taman', dan 'kasih'.
+# ''Fantasia''.
+# """
+
+test_raw_data = """<p><strong>TRIBUNNEWS.COM</strong>&nbsp;-&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/lembaga-perlindungan-saksi-dan-korban">Lembaga Perlindungan Saksi dan Korban</a>&nbsp;(LPSK) mengajukan rekomendasi permohonan keringanan hukuman terhadap&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/bharada-richard-eliezer">Bharada Richard Eliezer</a>&nbsp;atau Bharada E dalam kasus pembunuhan Brigadir Nofriansyah Yosua Hutabarat atau&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/brigadir-j">Brigadir J</a>.</p>\r\n<p>Pasalnya, Bharada Eliezer bersedia menjadi Justice Collaborator (JC) dalam membuka kasus ini.</p>\r\n<p>Apalagi kasus ini menyangkut kebohongan seorang perwira polri yang seharusnya menjadi penegak hukum.</p>"""
+
 print("Article RAW:")
 print(repr(test_raw_data))
 print()
 
-# result = preprocess_news_content(test_raw_data)
-# print(repr(result))
-# print(f"length: {len(result)}")
-# print()
+result = preprocess_news_content(test_raw_data)
+print(repr(result))
+print(f"length: {len(result)}")
+print()
 
 result = preprocess_separate_sentences(test_raw_data)
 print(repr(result))
 print(f"length: {len(result)}")
 print()
-
-# print(repr(preprocess_news_content("Mr. Blabla adalah seorang guru.")))
