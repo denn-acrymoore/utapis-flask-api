@@ -13,11 +13,6 @@ from bs4 import BeautifulSoup
 nltk.download("punkt")
 nltk.download("tagsets")
 
-# Additional Import for Algoritma Peluluhan Kata
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
-import string
-import pandas as pd
-
 app = Flask(__name__)
 
 
@@ -483,7 +478,8 @@ def get_cfg_bool_results(scp, list_of_tags):
     cfg_results = []
     for idx, (tags, tags_and_words) in enumerate(zip(tag_only_sentences, list_of_tags)):
         generator = stepping_chart_parsing(scp, tags)
-        generator_content_count = len(list(generator))
+        generator_content = list(generator)
+        generator_content_count = len(generator_content)
 
         if generator_content_count <= 0:
             cfg_results.append(False)
@@ -491,93 +487,11 @@ def get_cfg_bool_results(scp, list_of_tags):
         elif generator_content_count > 0:
             cfg_results.append(True)
             print(f"Sentence {idx + 1}/{num_of_sentences} = {tags_and_words}: {True}!")
+            for tree in generator_content:
+                print(tree)
+        print()
 
     return cfg_results
-
-
-# ======= Kode-Kode untuk Algoritma Peluluhan Kata =======
-
-
-def initialize_kata_benar():
-    dataset_path = os.path.dirname(os.path.abspath(__file__))
-    dataset = pd.read_excel(os.path.join(dataset_path, "kata_yang_benar.xlsx"))
-    return dataset["kata benar"].to_numpy()
-
-
-def tokenized_kalimat(berita):
-    test_raw_data = re.sub(r"(\\n|\\r)", r"\n", berita)
-    test_raw_data = re.sub(r"(\\t|\\f|\\v)", r" ", test_raw_data)
-
-    # Ekstraksi konten dari HTML Rich Text dengan BeautifulSoup4
-    soup = BeautifulSoup(test_raw_data, "html.parser")
-    news_html_free = soup.get_text()
-
-    # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
-    news_html_free = anyascii(news_html_free)
-
-    # tokenizing kalimat
-    sent_tokenized = nltk.tokenize.sent_tokenize(news_html_free)
-
-    return sent_tokenized
-
-
-def preprocess_data(kalimat):
-    sentence_processed = []
-
-    # mengubah kalimat menjadi huruf kecil
-    lower_case = kalimat.lower()
-
-    # menghilangkan kelebihan whitespace/karakter kosong
-    whitespace_removed = lower_case.strip()
-
-    # menghilangkan tanda baca
-    punctuation_removed = whitespace_removed.translate(
-        str.maketrans("", "", string.punctuation)
-    )
-
-    word_tokenized = nltk.tokenize.word_tokenize(punctuation_removed)
-
-    return word_tokenized
-
-
-def jaccard_similarity(list1, list2):
-    s1 = set(list1)
-    s2 = set(list2)
-    return float(len(s1.intersection(s2)) / len(s1.union(s2)))
-
-
-def hitung_similarity(hasil_preproses, data):
-    y = 0
-    factory = StemmerFactory()
-    stemmer = factory.create_stemmer()
-    word_send = []
-    CONSTANT = ["s", "p", "t", "k"]
-
-    for kalimat in hasil_preproses:
-
-        words_temp = []
-        words_berita = preprocess_data(kalimat)
-
-        for words in words_berita:
-            is_true = True
-            y = y + 1
-            if stemmer.stem(words)[0] in CONSTANT:
-                for data_words in data:
-                    if abs(len(words) - len(data_words)) <= 1:
-                        if stemmer.stem(words) == stemmer.stem(data_words):
-                            x = jaccard_similarity([*data_words], [*words])
-                            if x >= 0.75 and x <= 0.99:
-                                is_true = False
-                            else:
-                                pass
-                        else:
-                            pass
-            else:
-                pass
-            words_temp.append({"words": words, "is_true": is_true})
-
-        word_send.append(words_temp)
-    return word_send
 
 
 # ======= Kode-Kode untuk Flask Routing =======
@@ -667,37 +581,6 @@ def utapis_cek_sintaksis_kal_handler():
         )
 
 
-# Handler untuk peluluhan kata.
-@app.route("/utapis-peluluhan-kal", methods=["POST"])
-def utapis_peluluhan_kal_handler():
-    now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
-    print(
-        f"(Utapis Peluluhan Kal) New request received from {request.remote_addr} at {now.strftime('%Y-%b-%d %H:%M:%S')}"
-    )
-
-    article = request.form.get("article", "")
-
-    if len(article.strip()) <= 0:
-        print(
-            f"(Utapis Peluluhan Kal) Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 400)!"
-        )
-        return jsonify({"error": "Empty article input"}), 400
-
-    sentence_tokenized = tokenized_kalimat(article)
-    results = hitung_similarity(sentence_tokenized, data_kata_benar)
-
-    now = datetime.now(tz=pytz.timezone("Asia/Jakarta"))
-    print(
-        f"(Utapis Peluluhan Kal) Request from {request.remote_addr} finished at {now.strftime('%Y-%b-%d %H:%M:%S')} (Status: 200)!"
-    )
-    print()
-
-    return (
-        jsonify({"results": results}),
-        200,
-    )
-
-
 # Handler bila url yang digunakan salah.
 @app.errorhandler(404)
 def page_not_found(e):
@@ -707,8 +590,6 @@ def page_not_found(e):
 # Initialize CRF & CFG to global.
 utapis_crf_tagger, utapis_scp = initialize_crf_cfg()
 
-# Initialize dataset for peluluhan kata.
-data_kata_benar = initialize_kata_benar()
 
 if __name__ == "__main__":
     app.run(debug=True, host="localhost", port=8000)
