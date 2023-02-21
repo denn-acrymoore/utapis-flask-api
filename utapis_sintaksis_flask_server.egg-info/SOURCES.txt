@@ -3,7 +3,6 @@ README.txt
 pyproject.toml
 setup.py
 utapis_sintaksis_flask_server/__init__.py
-utapis_sintaksis_flask_server/kata_yang_benar.xlsx
 utapis_sintaksis_flask_server/main.py
 utapis_sintaksis_flask_server.egg-info/PKG-INFO
 utapis_sintaksis_flask_server.egg-info/SOURCES.txt
