@@ -12,6 +12,7 @@ def preprocess_news_content(news_str):
     membagi string berita tersebut lagi per kalimat dan melakukan text
     preprocessing.
     """
+
     # Unescape backslashes.
     # - Ubah \\n dan \\r menjadi \n.
     # - Ubah \\t \\f dan \\v menjadi " " (space).
@@ -32,11 +33,6 @@ def preprocess_news_content(news_str):
     # Ubah semua karakter unicode menjadi ASCII yang paling mendekati
     news_html_free = anyascii(news_html_free)
     # print("anyascii:")
-    # print(repr(news_html_free))
-
-    # Ubah karakter menjadi lowercase.
-    news_html_free = news_html_free.lower()
-    # print("lower():")
     # print(repr(news_html_free))
 
     # Bagi string berdasarkan separator newline ('\n').
