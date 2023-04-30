@@ -48,11 +48,6 @@ def preprocess_news_content(news_str):
     # print("anyascii:")
     # print(repr(news_html_free))
 
-    # Ubah karakter menjadi lowercase.
-    news_html_free = news_html_free.lower()
-    # print("lower():")
-    # print(repr(news_html_free))
-
     # Bagi string berdasarkan separator newline ('\n').
     # NOTE: Menggunakan separator \n, bukan \n\n karena
     #       beautiful soup akan mengubah \n+ menjadi \n.

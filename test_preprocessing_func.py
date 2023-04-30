@@ -434,3 +434,6 @@ result = preprocess_separate_sentences(test_raw_data)
 print(repr(result))
 print(f"length: {len(result)}")
 print()
+
+result = preprocess_news_content("Dia <tono> pergi.")
+print(repr(result))
