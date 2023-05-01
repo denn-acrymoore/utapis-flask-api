@@ -437,3 +437,8 @@ print()
 
 result = preprocess_news_content("Dia <tono> pergi.")
 print(repr(result))
+
+result = preprocess_news_content(
+    "1. Pencabutan aturan Omnibus Law UU Nomor 6 Tahun 2023 tentang Cipta Kerja."
+)
+print(repr(result))
