@@ -4,6 +4,8 @@ pyproject.toml
 setup.py
 utapis_sintaksis_flask_server/__init__.py
 utapis_sintaksis_flask_server/main.py
+utapis_sintaksis_flask_server/utapis_crf_model_skripsi.crf.tagger
+utapis_sintaksis_flask_server/utapis_sintaksis_kalimat_v2_skripsi.cfg
 utapis_sintaksis_flask_server.egg-info/PKG-INFO
 utapis_sintaksis_flask_server.egg-info/SOURCES.txt
 utapis_sintaksis_flask_server.egg-info/dependency_links.txt

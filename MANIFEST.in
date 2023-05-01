@@ -1,3 +1,2 @@
-include utapis_sintaksis_flask_server/utapis_crf_model.crf.tagger
-include utapis_sintaksis_flask_server/utapis_sintaksis_kalimat_v2.cfg
-include utapis_sintaksis_flask_server/kata_yang_benar.xlsx
+include utapis_sintaksis_flask_server/utapis_crf_model_skripsi.crf.tagger
+include utapis_sintaksis_flask_server/utapis_sintaksis_kalimat_v2_skripsi.cfg
