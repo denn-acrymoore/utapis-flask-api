@@ -54,6 +54,15 @@ def preprocess_news_content(news_str):
         # Ubah double single quote ('') menjadi double quote (").
         paragraph = re.sub(r"''", r'"', paragraph)
 
+        # Buang spasi di dalam kutipan (tepat di sebelah tanda kutip)
+        # E.g.: " Hello World. " --> "Hello World."
+        paragraph = re.sub(
+            r'"\s*(?P<quoteContent>.+\S)\s*"', r'"\g<quoteContent>"', paragraph
+        )
+        paragraph = re.sub(
+            r"'\s*(?P<quoteContent>.+\S)\s*'", r"'\g<quoteContent>'", paragraph
+        )
+
         # Pisahkan tanda titik terakhir dari bilangan agar tanda titik dapat
         # dipisahkan oleh nltk.tokenize.word_tokenize().
         # CONTOH KODE:
@@ -225,6 +234,15 @@ def preprocess_separate_sentences(news_str):
 
         # Ubah double single quote ('') menjadi double quote (").
         paragraph = re.sub(r"''", r'"', paragraph)
+
+        # Buang spasi di dalam kutipan (tepat di sebelah tanda kutip)
+        # E.g.: " Hello World. " --> "Hello World."
+        paragraph = re.sub(
+            r'"\s*(?P<quoteContent>.+\S)\s*"', r'"\g<quoteContent>"', paragraph
+        )
+        paragraph = re.sub(
+            r"'\s*(?P<quoteContent>.+\S)\s*'", r"'\g<quoteContent>'", paragraph
+        )
 
         # Pisahkan tanda titik terakhir dari bilangan agar tanda titik dapat
         # dipisahkan oleh nltk.tokenize.word_tokenize().
@@ -419,26 +437,45 @@ def preprocess_separate_sentences(news_str):
 # ''Fantasia''.
 # """
 
-test_raw_data = """<p><strong>TRIBUNNEWS.COM</strong>&nbsp;-&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/lembaga-perlindungan-saksi-dan-korban">Lembaga Perlindungan Saksi dan Korban</a>&nbsp;(LPSK) mengajukan rekomendasi permohonan keringanan hukuman terhadap&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/bharada-richard-eliezer">Bharada Richard Eliezer</a>&nbsp;atau Bharada E dalam kasus pembunuhan Brigadir Nofriansyah Yosua Hutabarat atau&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/brigadir-j">Brigadir J</a>.</p>\r\n<p>Pasalnya, Bharada Eliezer bersedia menjadi Justice Collaborator (JC) dalam membuka kasus ini.</p>\r\n<p>Apalagi kasus ini menyangkut kebohongan seorang perwira polri yang seharusnya menjadi penegak hukum.</p>"""
+# test_raw_data = """<p><strong>TRIBUNNEWS.COM</strong>&nbsp;-&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/lembaga-perlindungan-saksi-dan-korban">Lembaga Perlindungan Saksi dan Korban</a>&nbsp;(LPSK) mengajukan rekomendasi permohonan keringanan hukuman terhadap&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/bharada-richard-eliezer">Bharada Richard Eliezer</a>&nbsp;atau Bharada E dalam kasus pembunuhan Brigadir Nofriansyah Yosua Hutabarat atau&nbsp;<a class="blue" href="https://www.tribunnews.com/tag/brigadir-j">Brigadir J</a>.</p>\r\n<p>Pasalnya, Bharada Eliezer bersedia menjadi Justice Collaborator (JC) dalam membuka kasus ini.</p>\r\n<p>Apalagi kasus ini menyangkut kebohongan seorang perwira polri yang seharusnya menjadi penegak hukum.</p>"""
 
-print("Article RAW:")
-print(repr(test_raw_data))
-print()
+# print("Article RAW:")
+# print(repr(test_raw_data))
+# print()
 
-result = preprocess_news_content(test_raw_data)
-print(repr(result))
-print(f"length: {len(result)}")
-print()
+# result = preprocess_news_content(test_raw_data)
+# print(repr(result))
+# print(f"length: {len(result)}")
+# print()
 
-result = preprocess_separate_sentences(test_raw_data)
-print(repr(result))
-print(f"length: {len(result)}")
-print()
+# result = preprocess_separate_sentences(test_raw_data)
+# print(repr(result))
+# print(f"length: {len(result)}")
+# print()
 
-result = preprocess_news_content("Dia <tono> pergi.")
+# result = preprocess_news_content("Dia <tono> pergi.")
+# print(repr(result))
+
+# result = preprocess_news_content(
+#     "1. Pencabutan aturan Omnibus Law UU Nomor 6 Tahun 2023 tentang Cipta Kerja."
+# )
+# print(repr(result))
+
+# Ada spasi sebelum tanda kutip.
+# Error: nltk.tokenize.word_tokenize() tidak akan pisahkan '.' dari 'unit' --> 'unit.'
+# Fix: Preprocessing function perlu diupdate agar membuang whitespace di dalam kutipan yang bersebelahan dengan tanda kutip.
+result = preprocess_news_content(
+    "“Jika kekurangan amunisi tidak diisi ulang, maka... kemungkinan besar, kami akan terpaksa menarik sebagian unit. ”"
+)
 print(repr(result))
 
 result = preprocess_news_content(
-    "1. Pencabutan aturan Omnibus Law UU Nomor 6 Tahun 2023 tentang Cipta Kerja."
+    "“      Jika kekurangan amunisi tidak diisi ulang, maka... kemungkinan besar, kami akan terpaksa menarik sebagian unit.     ”"
+)
+print(repr(result))
+
+# Tidak da spasi sebelum tanda kutip.
+result = preprocess_news_content(
+    "“Jika kekurangan amunisi tidak diisi ulang, maka... kemungkinan besar, kami akan terpaksa menarik sebagian unit.”"
 )
 print(repr(result))

@@ -68,6 +68,15 @@ def preprocess_news_content(news_str):
         # Ubah double single quote ('') menjadi double quote (").
         paragraph = re.sub(r"''", r'"', paragraph)
 
+        # Buang spasi di dalam kutipan (tepat di sebelah tanda kutip)
+        # E.g.: " Hello World. " --> "Hello World."
+        paragraph = re.sub(
+            r'"\s*(?P<quoteContent>.+\S)\s*"', r'"\g<quoteContent>"', paragraph
+        )
+        paragraph = re.sub(
+            r"'\s*(?P<quoteContent>.+\S)\s*'", r"'\g<quoteContent>'", paragraph
+        )
+
         # Pisahkan tanda titik terakhir dari bilangan agar tanda titik dapat
         # dipisahkan oleh nltk.tokenize.word_tokenize().
         # CONTOH KODE:
@@ -240,6 +249,15 @@ def preprocess_separate_sentences(news_str):
 
         # Ubah double single quote ('') menjadi double quote (").
         paragraph = re.sub(r"''", r'"', paragraph)
+
+        # Buang spasi di dalam kutipan (tepat di sebelah tanda kutip)
+        # E.g.: " Hello World. " --> "Hello World."
+        paragraph = re.sub(
+            r'"\s*(?P<quoteContent>.+\S)\s*"', r'"\g<quoteContent>"', paragraph
+        )
+        paragraph = re.sub(
+            r"'\s*(?P<quoteContent>.+\S)\s*'", r"'\g<quoteContent>'", paragraph
+        )
 
         # Pisahkan tanda titik terakhir dari bilangan agar tanda titik dapat
         # dipisahkan oleh nltk.tokenize.word_tokenize().
