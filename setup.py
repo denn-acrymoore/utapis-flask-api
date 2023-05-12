@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="utapis-sintaksis-flask-server",
-    version="1.4.1",
+    version="1.5.0",
     install_requires=[
         "flask",
         "anyascii",
