@@ -3,8 +3,12 @@ import re
 import nltk
 from nltk.tag import CRFTagger
 import os
-from nltk.parse.chart import SteppingChartParser, FilteredSingleEdgeFundamentalRule
-from nltk.parse.chart import LeafInitRule, FilteredBottomUpPredictCombineRule
+from nltk.parse.chart import (
+    SteppingChartParser,
+    FilteredSingleEdgeFundamentalRule,
+    LeafInitRule,
+    FilteredBottomUpPredictCombineRule,
+)
 from anyascii import anyascii
 from datetime import datetime
 import pytz
