@@ -603,8 +603,8 @@ def get_cfg_bool_results(scp, list_of_tags):
         elif generator_content_count > 0:
             cfg_results.append(True)
             print(f"Sentence {idx + 1}/{num_of_sentences} = {tags_and_words}: {True}!")
-            for tree in generator_content:
-                print(tree)
+            # for tree in generator_content:
+            #     print(tree)
         print()
 
     return cfg_results
