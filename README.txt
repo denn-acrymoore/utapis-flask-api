@@ -1,7 +1,6 @@
-Modul Python 'utapis-sintaksis-flask-server' digunakan untuk memberikan akses ke 
-API ke Algoritma U-Tapis Pendeteksi Kesalahan Sintaksis Kalimat (CRF + CFG) dengan
-menggunakan Python Flask Server. 
+# U-Tapis Flask API
+Created by Denn Sebastian Emmanuel
 
-Modul ini juga digunakan sebagai proyek skripsi Denn Sebastian Emmanuel di Universitas Multimedia Nusantara
+This repository is created to finish the creator's internship and final project at Multimedia Nusantara University. 
 
-Dilarang menggandakan atau menggunakan kode-kode di dalam proyek ini tanpa izin dari pembuat kode (denn-acrymoore).
+DO NOT USE WITHOUT PERMISSION!
